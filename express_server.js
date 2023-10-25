@@ -12,7 +12,7 @@ app.get("/", (req, res) => {
 });
 
 app.get("/urls.json", (req, res) => {
-  res.json(a);
+  res.json(urlDatabase);
 });
 
 app.listen(PORT, () => {
