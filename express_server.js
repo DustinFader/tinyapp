@@ -15,6 +15,7 @@ app.get("/", (req, res) => {
   res.send("Hello!");
 });
 
+// prints database to page in json format
 app.get("/urls.json", (req, res) => {
   res.json(urlDatabase);
 });
@@ -32,6 +33,7 @@ app.get("/urls", (req, res) => {
   res.render("urls_index", templateVars);
 });
 
+// page with a form a user could fill and add to the database
 app.get("/urls/new", (req, res) => {
   res.render("urls_new");
 });
@@ -41,10 +43,18 @@ app.get("/urls/:id", (req, res) => {
   res.render("urls_show", templateVars);
 });
 
+// adds recieved info from urls/new form into database
 app.post("/urls", (req, res) => {
-  urlDatabase[generateRandomString()] = req.body.longURL;
-  res.send("Ok")
+  const shortUrl = generateRandomString();
+  urlDatabase[shortUrl] = req.body.longURL;
+  // res.send("Ok")
+  res.redirect(`/urls/${shortUrl}`)
 })
+
+app.get("/u/:id", (req, res) => {
+  const longURL = urlDatabase[req.params.id];
+  res.redirect(longURL);
+});
 
 // based on https://stackoverflow.com/questions/1349404/generate-random-string-characters-in-javascript?rq=1
 function generateRandomString() {
