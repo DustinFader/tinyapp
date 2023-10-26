@@ -46,6 +46,7 @@ app.post("/urls", (req, res) => {
   res.send("Ok")
 })
 
+// based on https://stackoverflow.com/questions/1349404/generate-random-string-characters-in-javascript?rq=1
 function generateRandomString() {
   let result = '';
   const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789'
