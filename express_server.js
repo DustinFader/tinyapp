@@ -28,12 +28,6 @@ app.get("/hello", (req, res) => {
   res.send('<html><body>Hello <b>World</b></body></html>\n')
 });
 
-app.post("/urls/:id", (req, res) => {
-  const { newLongUrl } = req.body;
-  const { id } = req.params;
-  urlDatabase[id] = newLongUrl;
-  res.redirect("/urls")
-})
 app.get("/urls", (req, res) => {
   const templateVars = { urls: urlDatabase };
   res.render("urls_index", templateVars);
@@ -43,6 +37,13 @@ app.get("/urls", (req, res) => {
 app.get("/urls/new", (req, res) => {
   res.render("urls_new");
 });
+
+app.post("/urls/:id", (req, res) => {
+  const { newLongUrl } = req.body;
+  const { id } = req.params;
+  urlDatabase[id] = newLongUrl;
+  res.redirect("/urls")
+})
 
 app.get("/urls/:id", (req, res) => {
   const templateVars = { id: req.params.id, longURL: urlDatabase[req.params.id] };
