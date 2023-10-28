@@ -13,6 +13,7 @@ const urlDatabase = {
 app.use(cookieParser());
 app.use(express.urlencoded({ extended: true }));
 
+// main urls
 app.get("/", (req, res) => {
   res.send("Hello!");
 });
@@ -22,6 +23,7 @@ app.get("/urls.json", (req, res) => {
   res.json(urlDatabase);
 });
 
+// authentication urls
 app.post("/login", (req, res) => {
   res.cookie("username", req.body.username);
   res.redirect("/urls");
@@ -32,10 +34,7 @@ app.post("/logout", (req, res) => {
   res.redirect("/urls");
 });
 
-app.listen(PORT, () => {
-  console.log(`Example app listening on port ${PORT}!`);
-});
-
+// hello world page
 app.get("/hello", (req, res) => {
   res.send('<html><body>Hello <b>World</b></body></html>\n');
 });
@@ -51,7 +50,7 @@ app.get("/urls/new", (req, res) => {
   res.render("urls_new", templateVars);
 });
 
-
+// add new url to database
 app.post("/urls/:id", (req, res) => {
   const { newLongUrl } = req.body;
   const { id } = req.params;
@@ -64,23 +63,26 @@ app.get("/urls/:id", (req, res) => {
   res.render("urls_show", templateVars);
 });
 
+// delete url in database
 app.post("/urls/:id/delete", (req, res) => {
   delete urlDatabase[req.params.id];
   res.redirect("/urls");
 });
 
-// adds recieved info from urls/new form into database
+// adds recieved input from /urls/new form into database
 app.post("/urls", (req, res) => {
   const shortUrl = generateRandomString();
   urlDatabase[shortUrl] = req.body.longURL;
-  // res.send("Ok")
   res.redirect(`/urls/${shortUrl}`);
 });
-
 
 app.get("/u/:id", (req, res) => {
   const longURL = urlDatabase[req.params.id];
   res.redirect(longURL);
+});
+
+app.listen(PORT, () => {
+  console.log(`Example app listening on port ${PORT}!`);
 });
 
 // based on https://stackoverflow.com/questions/1349404/generate-random-string-characters-in-javascript?rq=1
