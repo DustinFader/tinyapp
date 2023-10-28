@@ -1,6 +1,7 @@
 const express = require("express");
 const app = express();
 const PORT = 8080; // default port
+const cookieParser = require('cookie-parser');
 
 app.set("view engine", "ejs");
 
@@ -9,6 +10,7 @@ const urlDatabase = {
   "9sm5xK": "http://www.google.com"
 };
 
+app.use(cookieParser())
 app.use(express.urlencoded({ extended: true }))
 
 app.get("/", (req, res) => {
@@ -35,7 +37,7 @@ app.get("/hello", (req, res) => {
 });
 
 app.get("/urls", (req, res) => {
-  const templateVars = { urls: urlDatabase };
+  const templateVars = { username: req.cookies["username"], urls: urlDatabase };
   res.render("urls_index", templateVars);
 });
 
