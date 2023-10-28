@@ -20,6 +20,12 @@ app.get("/urls.json", (req, res) => {
   res.json(urlDatabase);
 });
 
+app.post("/login", (req, res) => {
+  res.cookie("username", req.body.username);
+  console.log("cookie")
+  res.redirect("/urls");
+});
+
 app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`);
 });
@@ -37,6 +43,7 @@ app.get("/urls", (req, res) => {
 app.get("/urls/new", (req, res) => {
   res.render("urls_new");
 });
+
 
 app.post("/urls/:id", (req, res) => {
   const { newLongUrl } = req.body;
@@ -62,6 +69,7 @@ app.post("/urls", (req, res) => {
   // res.send("Ok")
   res.redirect(`/urls/${shortUrl}`)
 })
+
 
 app.get("/u/:id", (req, res) => {
   const longURL = urlDatabase[req.params.id];
