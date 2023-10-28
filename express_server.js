@@ -24,7 +24,11 @@ app.get("/urls.json", (req, res) => {
 
 app.post("/login", (req, res) => {
   res.cookie("username", req.body.username);
-  console.log("cookie")
+  res.redirect("/urls");
+});
+
+app.post("/logout", (req, res) => {
+  res.clearCookie("username");
   res.redirect("/urls");
 });
 
@@ -33,7 +37,7 @@ app.listen(PORT, () => {
 });
 
 app.get("/hello", (req, res) => {
-  res.send('<html><body>Hello <b>World</b></body></html>\n')
+  res.send('<html><body>Hello <b>World</b></body></html>\n');
 });
 
 app.get("/urls", (req, res) => {
