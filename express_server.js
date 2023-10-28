@@ -10,8 +10,8 @@ const urlDatabase = {
   "9sm5xK": "http://www.google.com"
 };
 
-app.use(cookieParser())
-app.use(express.urlencoded({ extended: true }))
+app.use(cookieParser());
+app.use(express.urlencoded({ extended: true }));
 
 app.get("/", (req, res) => {
   res.send("Hello!");
@@ -47,7 +47,8 @@ app.get("/urls", (req, res) => {
 
 // page with a form a user could fill and add to the database
 app.get("/urls/new", (req, res) => {
-  res.render("urls_new");
+  const templateVars = { username: req.cookies["username"], urls: urlDatabase };
+  res.render("urls_new", templateVars);
 });
 
 
@@ -55,26 +56,26 @@ app.post("/urls/:id", (req, res) => {
   const { newLongUrl } = req.body;
   const { id } = req.params;
   urlDatabase[id] = newLongUrl;
-  res.redirect("/urls")
-})
+  res.redirect("/urls");
+});
 
 app.get("/urls/:id", (req, res) => {
-  const templateVars = { id: req.params.id, longURL: urlDatabase[req.params.id] };
+  const templateVars = { username: req.cookies["username"], id: req.params.id, longURL: urlDatabase[req.params.id] };
   res.render("urls_show", templateVars);
 });
 
 app.post("/urls/:id/delete", (req, res) => {
   delete urlDatabase[req.params.id];
-  res.redirect("/urls")
-})
+  res.redirect("/urls");
+});
 
 // adds recieved info from urls/new form into database
 app.post("/urls", (req, res) => {
   const shortUrl = generateRandomString();
   urlDatabase[shortUrl] = req.body.longURL;
   // res.send("Ok")
-  res.redirect(`/urls/${shortUrl}`)
-})
+  res.redirect(`/urls/${shortUrl}`);
+});
 
 
 app.get("/u/:id", (req, res) => {
@@ -83,11 +84,11 @@ app.get("/u/:id", (req, res) => {
 });
 
 // based on https://stackoverflow.com/questions/1349404/generate-random-string-characters-in-javascript?rq=1
-function generateRandomString() {
+const generateRandomString = () => {
   let result = '';
-  const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789'
+  const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
   for (let i = 0; i < 6; i++) {
-    result += characters[Math.floor(Math.random() * characters.length)]
+    result += characters[Math.floor(Math.random() * characters.length)];
   }
   return result;
-}
+};
