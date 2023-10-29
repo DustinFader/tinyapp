@@ -36,8 +36,34 @@ app.get("/urls.json", (req, res) => {
   res.json(urlDatabase);
 });
 
-// authentication urls
+// app.post("/login", (req, res) => {
+  //   res.cookie("user_id", req.body.user_id);
+  //   res.redirect("/urls");
+  // });
+  
+  // authentication urls
+
+app.get("/login", (req, res) => {
+  const templateVars = { userId: users[req.cookies["user_id"]], urls: urlDatabase };
+  res.render("login", templateVars);
+})
+
 app.post("/login", (req, res) => {
+  // if email passed is in database then
+  // if password equal the same in the database then logs in
+  // else return 400? code
+  const { email, password } = req.body;
+  const user = getUserByEmail(email);
+  if (user === undefined) {
+    res.status(400).send("No user by that email")
+    return;
+  }
+
+  if (users[user].password !== password) {
+    res.status(400).send("Wrong password")
+    return;
+  }
+
   res.cookie("user_id", req.body.user_id);
   res.redirect("/urls");
 });
@@ -101,10 +127,13 @@ app.post("/register", (req, res) => {
   const { email, password } = req.body;
   if (!email || !password) {
     res.status(400).send("Code 400: Email or password empty. Make sure they are both filled.")
+    return;
   }
   // also if email exists already then return code 400 as well.
+  // getUserByEmail will return false if email does not exist else user which is true in boolean
   if (getUserByEmail(email)) {
     res.status(400).send("Code 400: Email exists in database already.")
+    return;
   }
   const newId = generateRandomString()
   users[newId] = { id: newId, email, password }
@@ -126,14 +155,14 @@ app.listen(PORT, () => {
 const getUserByEmail = (email) => {
   // loops through users database
   // checking if each users email matches the email being used
-  // if it doesnt exist in any user object then return true
-  // else false
+  // if it doesnt exist in any user object then return undefined
+  // else return user
   for (let user in users) {
-    if (user.email === email) {
-      return false;
+    if (users[user].email === email) {
+      return user;
     }
   }
-  return true;
+  return false;
 }
 
 // based on https://stackoverflow.com/questions/1349404/generate-random-string-characters-in-javascript?rq=1
