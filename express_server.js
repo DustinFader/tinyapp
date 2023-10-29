@@ -96,8 +96,18 @@ app.get("/u/:id", (req, res) => {
 
 // adds new user to users database
 app.post("/register", (req, res) => {
+  // error handling for when either password or email is empty
+  // pass back 400 when error
+  const { email, password } = req.body;
+  if (!email || !password) {
+    res.status(400).send("Code 400: Email or password empty. Make sure they are both filled.")
+  }
+  // also if email exists already then return code 400 as well.
+  if (getUserByEmail(email)) {
+    res.status(400).send("Code 400: Email exists in database already.")
+  }
   const newId = generateRandomString()
-  users[newId] = { id: newId, email: req.body.email, password: req.body.password }
+  users[newId] = { id: newId, email, password }
   console.log(users)
   res.cookie("user_id", newId);
   res.redirect("/urls");
@@ -112,6 +122,19 @@ app.get("/register", (req, res) => {
 app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`);
 });
+
+const getUserByEmail = (email) => {
+  // loops through users database
+  // checking if each users email matches the email being used
+  // if it doesnt exist in any user object then return true
+  // else false
+  for (let user in users) {
+    if (user.email === email) {
+      return false;
+    }
+  }
+  return true;
+}
 
 // based on https://stackoverflow.com/questions/1349404/generate-random-string-characters-in-javascript?rq=1
 const generateRandomString = (maxLength=6) => {
