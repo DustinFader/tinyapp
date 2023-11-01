@@ -44,15 +44,9 @@ app.get("/urls.json", (req, res) => {
   res.json(urlDatabase);
 });
 
-
 ////////////////////////
 // authentication urls
 ////////////////////////
-
-// app.post("/login", (req, res) => {
-//   res.cookie("user_id", req.body.user_id);
-//   res.redirect("/urls");
-// });
 
 app.get("/login", (req, res) => {
   const templateVars = { userId: users[req.cookies["user_id"]], urls: urlDatabase };
@@ -75,8 +69,8 @@ app.post("/login", (req, res) => {
   } else if (users[user].password !== password) {
     res.status(400).end("<p>Wrong password</p>");
   }
-  
-  res.cookie("user_id", req.body.user_id);
+
+  res.cookie("user_id", user);
   res.redirect("/urls");
 });
 
@@ -145,20 +139,22 @@ app.post("/register", (req, res) => {
   // error handling for when either password or email is empty
   // pass back 400 when error
   const { email, password } = req.body;
+  
   if (!email || !password) {
     res.status(400).end("<p>Code 400: Email or password empty. Make sure they are both filled.<p>");
   }
+
   // also if email exists already then return code 400 as well.
   if (getUserByEmail(email)) {
     res.status(400).end("<p>Code 400: Email exists in database already.</p>");
   }
+
   const newId = generateRandomString(6);
   users[newId] = { id: newId, email, password };
-  console.log(users);
+
   res.cookie("user_id", newId);
   res.redirect("/urls");
 });
-
 
 app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`);
