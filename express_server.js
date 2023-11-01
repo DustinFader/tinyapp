@@ -1,9 +1,14 @@
 const express = require("express");
+const morgan = require("morgan");
 const app = express();
-const PORT = 8080; // default port
-const cookieParser = require('cookie-parser');
+const cookieParser = require("cookie-parser");
 
+const PORT = 8080; // default port
 app.set("view engine", "ejs");
+
+//////////////////
+// test databases
+//////////////////
 
 const urlDatabase = {
   "b2xVn2": "http://www.lighthouselabs.ca",
@@ -23,6 +28,9 @@ const users = {
   },
 };
 
+/////////////////
+
+app.use(morgan("dev"));
 app.use(cookieParser());
 app.use(express.urlencoded({ extended: true }));
 
@@ -36,34 +44,38 @@ app.get("/urls.json", (req, res) => {
   res.json(urlDatabase);
 });
 
+
+////////////////////////
+// authentication urls
+////////////////////////
+
 // app.post("/login", (req, res) => {
-  //   res.cookie("user_id", req.body.user_id);
-  //   res.redirect("/urls");
-  // });
-  
-  // authentication urls
+//   res.cookie("user_id", req.body.user_id);
+//   res.redirect("/urls");
+// });
 
 app.get("/login", (req, res) => {
   const templateVars = { userId: users[req.cookies["user_id"]], urls: urlDatabase };
   res.render("login", templateVars);
-})
+});
 
 app.post("/login", (req, res) => {
   // if email passed is in database then
   // if password equal the same in the database then logs in
-  // else return 400? code
+  // else return 400 code
   const { email, password } = req.body;
   const user = getUserByEmail(email);
-  if (user === undefined) {
-    res.status(400).send("No user by that email")
-    return;
-  }
 
-  if (users[user].password !== password) {
-    res.status(400).send("Wrong password")
-    return;
+  if (!email || !password) {
+    res.status(400).end("<p>Code 400: Email or password empty. Make sure they are both filled.</p>");
   }
-
+  
+  if (!user) {
+    res.status(400).end("<p>No user by that email</p>");
+  } else if (users[user].password !== password) {
+    res.status(400).end("<p>Wrong password</p>");
+  }
+  
   res.cookie("user_id", req.body.user_id);
   res.redirect("/urls");
 });
@@ -73,9 +85,17 @@ app.post("/logout", (req, res) => {
   res.redirect("/urls");
 });
 
+// registration page
+app.get("/register", (req, res) => {
+  const templateVars = { userId: users[req.cookies["user_id"]], id: req.params.id, longURL: urlDatabase[req.params.id] };
+  res.render("register", templateVars);
+});
+
+////////////////////////
+
 // hello world page
 app.get("/hello", (req, res) => {
-  res.send('<html><body>Hello <b>World</b></body></html>\n');
+  res.send("<html><body>Hello <b>World</b></body></html>\n");
 });
 
 app.get("/urls", (req, res) => {
@@ -110,7 +130,7 @@ app.post("/urls/:id/delete", (req, res) => {
 
 // adds recieved input from /urls/new form into database
 app.post("/urls", (req, res) => {
-  const shortUrl = generateRandomString();
+  const shortUrl = generateRandomString(6);
   urlDatabase[shortUrl] = req.body.longURL;
   res.redirect(`/urls/${shortUrl}`);
 });
@@ -126,27 +146,19 @@ app.post("/register", (req, res) => {
   // pass back 400 when error
   const { email, password } = req.body;
   if (!email || !password) {
-    res.status(400).send("Code 400: Email or password empty. Make sure they are both filled.")
-    return;
+    res.status(400).end("<p>Code 400: Email or password empty. Make sure they are both filled.<p>");
   }
   // also if email exists already then return code 400 as well.
-  // getUserByEmail will return false if email does not exist else user which is true in boolean
   if (getUserByEmail(email)) {
-    res.status(400).send("Code 400: Email exists in database already.")
-    return;
+    res.status(400).end("<p>Code 400: Email exists in database already.</p>");
   }
-  const newId = generateRandomString()
-  users[newId] = { id: newId, email, password }
-  console.log(users)
+  const newId = generateRandomString(6);
+  users[newId] = { id: newId, email, password };
+  console.log(users);
   res.cookie("user_id", newId);
   res.redirect("/urls");
 });
 
-// registration page
-app.get("/register", (req, res) => {
-  const templateVars = { userId: users[req.cookies["user_id"]], id: req.params.id, longURL: urlDatabase[req.params.id] };
-  res.render("register", templateVars);
-});
 
 app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`);
@@ -155,18 +167,17 @@ app.listen(PORT, () => {
 const getUserByEmail = (email) => {
   // loops through users database
   // checking if each users email matches the email being used
-  // if it doesnt exist in any user object then return undefined
-  // else return user
+  // if it matches then returns the emails user id else undefined
   for (let user in users) {
     if (users[user].email === email) {
       return user;
     }
   }
   return false;
-}
+};
 
 // based on https://stackoverflow.com/questions/1349404/generate-random-string-characters-in-javascript?rq=1
-const generateRandomString = (maxLength=6) => {
+const generateRandomString = (maxLength) => {
   let result = '';
   const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
   for (let i = 0; i < maxLength; i++) {
