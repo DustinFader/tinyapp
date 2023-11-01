@@ -65,9 +65,9 @@ app.post("/login", (req, res) => {
   }
   
   if (!user) {
-    res.status(400).end("<p>No user by that email</p>");
+    res.status(403).end("<p>No user by that email</p>");
   } else if (users[user].password !== password) {
-    res.status(400).end("<p>Wrong password</p>");
+    res.status(403).end("<p>Wrong password</p>");
   }
 
   res.cookie("user_id", user);
@@ -76,7 +76,7 @@ app.post("/login", (req, res) => {
 
 app.post("/logout", (req, res) => {
   res.clearCookie("user_id");
-  res.redirect("/urls");
+  res.redirect("/login");
 });
 
 // registration page
@@ -136,10 +136,9 @@ app.get("/u/:id", (req, res) => {
 
 // adds new user to users database
 app.post("/register", (req, res) => {
-  // error handling for when either password or email is empty
-  // pass back 400 when error
   const { email, password } = req.body;
   
+  // error handling for when either password or email is empty
   if (!email || !password) {
     res.status(400).end("<p>Code 400: Email or password empty. Make sure they are both filled.<p>");
   }
@@ -163,7 +162,7 @@ app.listen(PORT, () => {
 const getUserByEmail = (email) => {
   // loops through users database
   // checking if each users email matches the email being used
-  // if it matches then returns the emails user id else undefined
+  // if it matches then returns the emails user id else false
   for (let user in users) {
     if (users[user].email === email) {
       return user;
