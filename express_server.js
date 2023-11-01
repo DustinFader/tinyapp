@@ -36,7 +36,7 @@ app.use(express.urlencoded({ extended: true }));
 
 // main urls
 app.get("/", (req, res) => {
-  res.send("Hello!");
+  res.redirect("/urls");
 });
 
 // prints database to page in json format
@@ -55,7 +55,7 @@ app.get("/login", (req, res) => {
 
 app.post("/login", (req, res) => {
   // if email passed is in database then
-  // if password equal the same in the database then logs in
+  // if password equal the same in the database then logs in and gives cookie
   // else return 400 code
   const { email, password } = req.body;
   const user = getUserByEmail(email);
@@ -63,7 +63,7 @@ app.post("/login", (req, res) => {
   if (!email || !password) {
     res.status(400).end("<p>Code 400: Email or password empty. Make sure they are both filled.</p>");
   }
-  
+
   if (!user) {
     res.status(403).end("<p>No user by that email</p>");
   } else if (users[user].password !== password) {
@@ -137,7 +137,7 @@ app.get("/u/:id", (req, res) => {
 // adds new user to users database
 app.post("/register", (req, res) => {
   const { email, password } = req.body;
-  
+
   // error handling for when either password or email is empty
   if (!email || !password) {
     res.status(400).end("<p>Code 400: Email or password empty. Make sure they are both filled.<p>");
