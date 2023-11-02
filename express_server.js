@@ -118,7 +118,7 @@ app.get("/urls", (req, res) => {
 
 // page with a form a user could fill and add to the database
 app.get("/urls/new", (req, res) => {
-  if (req.cookies["user_id"]) {
+  if (!req.cookies["user_id"]) {
     res.redirect("/login");
   } else {
     const templateVars = { userId: users[req.cookies["user_id"]], urls: urlDatabase };
@@ -141,17 +141,18 @@ app.get("/urls/:id", (req, res) => {
 
 // delete url in database
 app.post("/urls/:id/delete", (req, res) => {
-  delete urlDatabase[req.params.id].longURL;
+  delete urlDatabase[req.params.id];
   res.redirect("/urls");
 });
 
 // adds recieved input from /urls/new form into database
 app.post("/urls", (req, res) => {
-  if (!req.cookies["user_id"]) {
+  const userID = req.cookies["user_id"];
+  if (!userID) {
     res.send("Cannot shorten urls until logged in");
   } else {
     const shortUrl = generateRandomString(6);
-    urlDatabase[shortUrl] = req.body.longURL;
+    urlDatabase[shortUrl] = { longURL: req.body.longURL, userID};
     res.redirect(`/urls/${shortUrl}`);
   }
 });
