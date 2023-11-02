@@ -49,8 +49,12 @@ app.get("/urls.json", (req, res) => {
 ////////////////////////
 
 app.get("/login", (req, res) => {
-  const templateVars = { userId: users[req.cookies["user_id"]], urls: urlDatabase };
-  res.render("login", templateVars);
+  if (req.cookies["user_id"]) {
+    res.redirect("/urls");
+  } else {
+    const templateVars = { userId: users[req.cookies["user_id"]], urls: urlDatabase };
+    res.render("login", templateVars);
+  }
 });
 
 app.post("/login", (req, res) => {
@@ -81,8 +85,12 @@ app.post("/logout", (req, res) => {
 
 // registration page
 app.get("/register", (req, res) => {
-  const templateVars = { userId: users[req.cookies["user_id"]], id: req.params.id, longURL: urlDatabase[req.params.id] };
-  res.render("register", templateVars);
+  if (req.cookies["user_id"]) {
+    res.redirect("/urls");
+  } else {
+    const templateVars = { userId: users[req.cookies["user_id"]], id: req.params.id, longURL: urlDatabase[req.params.id] };
+    res.render("register", templateVars);
+  }
 });
 
 ////////////////////////
