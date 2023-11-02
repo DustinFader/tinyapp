@@ -10,9 +10,20 @@ app.set("view engine", "ejs");
 // test databases
 //////////////////
 
+// const urlDatabase = {
+//   "b2xVn2": "http://www.lighthouselabs.ca",
+//   "9sm5xK": "http://www.google.com"
+// };
+
 const urlDatabase = {
-  "b2xVn2": "http://www.lighthouselabs.ca",
-  "9sm5xK": "http://www.google.com"
+  b6UTxQ: {
+    longURL: "https://www.tsn.ca",
+    userID: "aJ48lW",
+  },
+  i3BoGr: {
+    longURL: "https://www.google.ca",
+    userID: "aJ48lW",
+  },
 };
 
 const users = {
@@ -52,7 +63,7 @@ app.get("/login", (req, res) => {
   if (req.cookies["user_id"]) {
     res.redirect("/urls");
   } else {
-    const templateVars = { userId: users[req.cookies["user_id"]], urls: urlDatabase };
+    const templateVars = { userId: users[req.cookies["user_id"]] };
     res.render("login", templateVars);
   }
 });
@@ -88,7 +99,7 @@ app.get("/register", (req, res) => {
   if (req.cookies["user_id"]) {
     res.redirect("/urls");
   } else {
-    const templateVars = { userId: users[req.cookies["user_id"]], id: req.params.id, longURL: urlDatabase[req.params.id] };
+    const templateVars = { userId: users[req.cookies["user_id"]] };
     res.render("register", templateVars);
   }
 });
@@ -107,39 +118,49 @@ app.get("/urls", (req, res) => {
 
 // page with a form a user could fill and add to the database
 app.get("/urls/new", (req, res) => {
-  const templateVars = { userId: users[req.cookies["user_id"]], urls: urlDatabase };
-  res.render("urls_new", templateVars);
+  if (req.cookies["user_id"]) {
+    res.redirect("/login");
+  } else {
+    const templateVars = { userId: users[req.cookies["user_id"]], urls: urlDatabase };
+    res.render("urls_new", templateVars);
+  }
 });
 
 // add new url to database
 app.post("/urls/:id", (req, res) => {
   const { newLongUrl } = req.body;
   const { id } = req.params;
-  urlDatabase[id] = newLongUrl;
+  urlDatabase[id].longURL = newLongUrl;
   res.redirect("/urls");
 });
 
 app.get("/urls/:id", (req, res) => {
-  const templateVars = { userId: users[req.cookies["user_id"]], id: req.params.id, longURL: urlDatabase[req.params.id] };
+  const templateVars = { userId: users[req.cookies["user_id"]], id: req.params.id, longURL: urlDatabase[req.params.id].longURL };
   res.render("urls_show", templateVars);
 });
 
 // delete url in database
 app.post("/urls/:id/delete", (req, res) => {
-  delete urlDatabase[req.params.id];
+  delete urlDatabase[req.params.id].longURL;
   res.redirect("/urls");
 });
 
 // adds recieved input from /urls/new form into database
 app.post("/urls", (req, res) => {
-  const shortUrl = generateRandomString(6);
-  urlDatabase[shortUrl] = req.body.longURL;
-  res.redirect(`/urls/${shortUrl}`);
+  if (!req.cookies["user_id"]) {
+    res.send("Cannot shorten urls until logged in");
+  } else {
+    const shortUrl = generateRandomString(6);
+    urlDatabase[shortUrl] = req.body.longURL;
+    res.redirect(`/urls/${shortUrl}`);
+  }
 });
 
 app.get("/u/:id", (req, res) => {
-  const longURL = urlDatabase[req.params.id];
-  res.redirect(longURL);
+  const longURL = urlDatabase[req.params.id].longURL;
+  if (longURL) {
+    res.redirect(longURL);
+  } else res.send("Url does not exist.");
 });
 
 // adds new user to users database
