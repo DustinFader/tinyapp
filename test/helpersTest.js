@@ -1,6 +1,6 @@
 const { assert } = require('chai');
 
-const { getUserByEmail, urlsForUser, generateRandomString } = require("../helpers");
+const { getUserByEmail, urlsForUser } = require("../helpers");
 
 const testUsers = {
   userRandomID: {
@@ -15,6 +15,17 @@ const testUsers = {
   }
 };
 
+const testUrlDatabase = {
+  b6UTxQ: {
+    longURL: "https://www.tsn.ca",
+    userID: "aJ48lr",
+  },
+  i3BoGr: {
+    longURL: "https://www.google.ca",
+    userID: "aJ48lW",
+  },
+};
+
 describe('getUserByEmail', () => {
   it('should return a user with valid email', () => {
     const user = getUserByEmail("user@example.com", testUsers);
@@ -27,4 +38,23 @@ describe('getUserByEmail', () => {
     const expectedUserID = undefined;
     assert.strictEqual(user, expectedUserID);
   });
+});
+
+describe('urlsForUser', () => {
+  it('should return an object of urls that the user is only allowed', () => {
+    const user = urlsForUser("aJ48lW", testUrlDatabase);
+    const expectedUserID = {
+      i3BoGr: {
+        longURL: "https://www.google.ca",
+        userID: "aJ48lW"
+      }
+    };
+    assert.deepEqual(user, expectedUserID);
+  });
+
+  // it('should return undefined from an email that doesnt exist in database.', () => {
+  //   const user = getUserByEmail("aJ48lt", testUrlDatabase);
+  //   const expectedUserID = {};
+  //   assert.strictEqual(user, expectedUserID);
+  // });
 });
