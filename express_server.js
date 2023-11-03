@@ -1,7 +1,8 @@
 const express = require("express");
 const morgan = require("morgan");
 const app = express();
-const cookieParser = require("cookie-parser");
+//const cookieParser = require("cookie-parser");
+const cookieSession = require('cookie-session');
 const bcrypt = require("bcryptjs");
 
 const PORT = 8080; // default port
@@ -10,11 +11,6 @@ app.set("view engine", "ejs");
 //////////////////
 // test databases
 //////////////////
-
-// const urlDatabase = {
-//   "b2xVn2": "http://www.lighthouselabs.ca",
-//   "9sm5xK": "http://www.google.com"
-// };
 
 const urlDatabase = {
   b6UTxQ: {
@@ -43,8 +39,13 @@ const users = {
 /////////////////
 
 app.use(morgan("dev"));
-app.use(cookieParser());
+//app.use(cookieParser());
 app.use(express.urlencoded({ extended: true }));
+app.use(cookieSession({
+  name: 'session',
+  keys: ["Slander", "Hofman", "Liftoff"],
+  maxAge: 12 * 60 * 60 * 1000 // 12 hours
+}));
 
 // main urls
 app.get("/", (req, res) => {
@@ -61,7 +62,7 @@ app.get("/urls.json", (req, res) => {
 ////////////////////////
 
 app.get("/login", (req, res) => {
-  const user = req.cookies["user_id"];
+  const user = req.session.user_id;
 
   if (user) {
     res.redirect("/urls");
@@ -86,24 +87,23 @@ app.post("/login", (req, res) => {
     return res.status(403).end("<p>No user by that email</p>");
   }
   
-  console.log(bcrypt.compareSync(password, users[userID].password));
   const rightPass = bcrypt.compareSync(password, users[userID].password,);
   if (!rightPass) {
     return res.status(403).end("<p>Wrong password</p>");
   }
 
-  res.cookie("user_id", userID);
+  req.session.user_id = userID;
   res.redirect("/urls");
 });
 
 app.post("/logout", (req, res) => {
-  res.clearCookie("user_id");
+  req.session = null;
   res.redirect("/login");
 });
 
 // registration page
 app.get("/register", (req, res) => {
-  const user = req.cookies["user_id"];
+  const user = req.session.user_id;
 
   if (user) {
     res.redirect("/urls");
@@ -121,7 +121,8 @@ app.get("/hello", (req, res) => {
 });
 
 app.get("/urls", (req, res) => {
-  const user = req.cookies["user_id"];
+  const user = req.session.user_id;
+  console.log(user); // Don't forget to remove this one once done testing
   const urls = urlsForUser(user);
   const templateVars = { userId: users[user], urls };
   res.render("urls_index", templateVars);
@@ -129,7 +130,7 @@ app.get("/urls", (req, res) => {
 
 // page with a form a user could fill and add to the database
 app.get("/urls/new", (req, res) => {
-  const user = req.cookies["user_id"];
+  const user = req.session.user_id;
 
   if (!user) {
     res.redirect("/login");
@@ -142,7 +143,7 @@ app.get("/urls/new", (req, res) => {
 // add new url to database
 app.post("/urls/:id", (req, res) => {
   const { id } = req.params;
-  const user = req.cookies["user_id"];
+  const user = req.session.user_id;
   const { newLongUrl } = req.body;
 
   if (!id) {
@@ -158,7 +159,7 @@ app.post("/urls/:id", (req, res) => {
 });
 
 app.get("/urls/:id", (req, res) => {
-  const user = req.cookies["user_id"];
+  const user = req.session.user_id;
   const { id } = req.params;
 
   if (!user) {
@@ -173,7 +174,7 @@ app.get("/urls/:id", (req, res) => {
 
 // delete url in database
 app.post("/urls/:id/delete", (req, res) => {
-  const user = req.cookies["user_id"];
+  const user = req.session.user_id;
   const { id } = req.params;
   
   if (!urlDatabase[id]) {
@@ -190,7 +191,7 @@ app.post("/urls/:id/delete", (req, res) => {
 
 // adds recieved input from /urls/new form into database
 app.post("/urls", (req, res) => {
-  const userID = req.cookies["user_id"];
+  const userID = req.session.user_id;
 
   if (!userID) {
     res.send("Cannot shorten urls until logged in");
@@ -213,7 +214,6 @@ app.get("/u/:id", (req, res) => {
 app.post("/register", (req, res) => {
   const { email, password } = req.body;
 
-  
   // error handling for when either password or email is empty
   if (!email || !password) {
     res.status(400).end("<p>Code 400: Email or password empty. Make sure they are both filled.<p>");
@@ -221,10 +221,12 @@ app.post("/register", (req, res) => {
     res.status(400).end("<p>Code 400: Email exists in database already.</p>");
   } else {
     const newId = generateRandomString(6);
-    const hashedPass = bcrypt.hashSync(password, 10);
+    const salt = bcrypt.genSaltSync(10);
+    const hashedPass = bcrypt.hashSync(password, salt);
+
+    // assign new user to user database
     users[newId] = { id: newId, email, password:hashedPass };
-    console.log(users);
-    res.cookie("user_id", newId);
+    req.session.user_id = newId;
   }
   res.redirect("/urls");
 });
