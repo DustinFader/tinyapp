@@ -32,8 +32,8 @@ const users = {
     email: "user@example.com",
     password: "purple-monkey-dinosaur",
   },
-  user2RandomID: {
-    id: "user2RandomID",
+  aJ48lW: {
+    id: "aJ48lW",
     email: "user2@example.com",
     password: "dishwasher-funk",
   },
@@ -60,10 +60,12 @@ app.get("/urls.json", (req, res) => {
 ////////////////////////
 
 app.get("/login", (req, res) => {
-  if (req.cookies["user_id"]) {
+  const user = req.cookies["user_id"];
+
+  if (user) {
     res.redirect("/urls");
   } else {
-    const templateVars = { userId: users[req.cookies["user_id"]] };
+    const templateVars = { userId: users[user] };
     res.render("login", templateVars);
   }
 });
@@ -73,19 +75,19 @@ app.post("/login", (req, res) => {
   // if password equal the same in the database then logs in and gives cookie
   // else return 400 code
   const { email, password } = req.body;
-  const user = getUserByEmail(email);
-
+  
   if (!email || !password) {
-    res.status(400).end("<p>Code 400: Email or password empty. Make sure they are both filled.</p>");
+    return res.status(400).end("<p>Code 400: Email or password empty. Make sure they are both filled.</p>");
+  }
+  
+  const userID = getUserByEmail(email);
+  if (!userID) {
+    return res.status(403).end("<p>No user by that email</p>");
+  } else if (users[userID].password !== password) {
+    return res.status(403).end("<p>Wrong password</p>");
   }
 
-  if (!user) {
-    res.status(403).end("<p>No user by that email</p>");
-  } else if (users[user].password !== password) {
-    res.status(403).end("<p>Wrong password</p>");
-  }
-
-  res.cookie("user_id", user);
+  res.cookie("user_id", userID);
   res.redirect("/urls");
 });
 
@@ -96,10 +98,12 @@ app.post("/logout", (req, res) => {
 
 // registration page
 app.get("/register", (req, res) => {
-  if (req.cookies["user_id"]) {
+  const user = req.cookies["user_id"];
+
+  if (user) {
     res.redirect("/urls");
   } else {
-    const templateVars = { userId: users[req.cookies["user_id"]] };
+    const templateVars = { userId: users[user] };
     res.render("register", templateVars);
   }
 });
@@ -112,42 +116,78 @@ app.get("/hello", (req, res) => {
 });
 
 app.get("/urls", (req, res) => {
-  const templateVars = { userId: users[req.cookies["user_id"]], urls: urlDatabase };
+  const user = req.cookies["user_id"];
+  const urls = urlsForUser(user);
+  const templateVars = { userId: users[user], urls };
   res.render("urls_index", templateVars);
 });
 
 // page with a form a user could fill and add to the database
 app.get("/urls/new", (req, res) => {
-  if (!req.cookies["user_id"]) {
+  const user = req.cookies["user_id"];
+
+  if (!user) {
     res.redirect("/login");
   } else {
-    const templateVars = { userId: users[req.cookies["user_id"]], urls: urlDatabase };
+    const templateVars = { userId: users[user], urls: urlDatabase };
     res.render("urls_new", templateVars);
   }
 });
 
 // add new url to database
 app.post("/urls/:id", (req, res) => {
-  const { newLongUrl } = req.body;
   const { id } = req.params;
+  const user = req.cookies["user_id"];
+  console.log(req.cookies);
+  const { newLongUrl } = req.body;
+
+  if (!id) {
+    return res.send("End point does not exist, try another.");
+  } else if (!user) {
+    return res.send("Need to be logged in.");
+  } else if (urlDatabase[id].userID !== user) {
+    return res.send("Url does not belong to you.");
+  }
+
   urlDatabase[id].longURL = newLongUrl;
   res.redirect("/urls");
 });
 
 app.get("/urls/:id", (req, res) => {
-  const templateVars = { userId: users[req.cookies["user_id"]], id: req.params.id, longURL: urlDatabase[req.params.id].longURL };
-  res.render("urls_show", templateVars);
+  const user = req.cookies["user_id"];
+  const { id } = req.params;
+
+  if (!user) {
+    res.send("Need to be logged in to use this page.");
+  } else if (!urlsForUser(user)[id]) {
+    res.send("Page not available to user");
+  } else {
+    const templateVars = { userId: users[user], id, longURL: urlDatabase[id].longURL };
+    res.render("urls_show", templateVars);
+  }
 });
 
 // delete url in database
 app.post("/urls/:id/delete", (req, res) => {
-  delete urlDatabase[req.params.id];
-  res.redirect("/urls");
+  const user = req.cookies["user_id"];
+  const { id } = req.params;
+  
+  if (!urlDatabase[id]) {
+    return res.send("Id does not exist try another.");
+  } else if (!user) {
+    return res.send("Need to be logged in.");
+  } else if (urlDatabase[id].userID !== user) {
+    return res.send("Url does not belong to you.");
+  } else {
+    delete urlDatabase[id];
+    res.redirect("/urls");
+  }
 });
 
 // adds recieved input from /urls/new form into database
 app.post("/urls", (req, res) => {
   const userID = req.cookies["user_id"];
+
   if (!userID) {
     res.send("Cannot shorten urls until logged in");
   } else {
@@ -159,6 +199,7 @@ app.post("/urls", (req, res) => {
 
 app.get("/u/:id", (req, res) => {
   const longURL = urlDatabase[req.params.id].longURL;
+
   if (longURL) {
     res.redirect(longURL);
   } else res.send("Url does not exist.");
@@ -171,17 +212,14 @@ app.post("/register", (req, res) => {
   // error handling for when either password or email is empty
   if (!email || !password) {
     res.status(400).end("<p>Code 400: Email or password empty. Make sure they are both filled.<p>");
-  }
-
-  // also if email exists already then return code 400 as well.
-  if (getUserByEmail(email)) {
+  } else if (getUserByEmail(email)) {
     res.status(400).end("<p>Code 400: Email exists in database already.</p>");
+  } else {
+    const newId = generateRandomString(6);
+    users[newId] = { id: newId, email, password };
+
+    res.cookie("user_id", newId);
   }
-
-  const newId = generateRandomString(6);
-  users[newId] = { id: newId, email, password };
-
-  res.cookie("user_id", newId);
   res.redirect("/urls");
 });
 
