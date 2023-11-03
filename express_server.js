@@ -2,6 +2,7 @@ const express = require("express");
 const morgan = require("morgan");
 const app = express();
 const cookieParser = require("cookie-parser");
+const bcrypt = require("bcryptjs");
 
 const PORT = 8080; // default port
 app.set("view engine", "ejs");
@@ -83,7 +84,11 @@ app.post("/login", (req, res) => {
   const userID = getUserByEmail(email);
   if (!userID) {
     return res.status(403).end("<p>No user by that email</p>");
-  } else if (users[userID].password !== password) {
+  }
+  
+  console.log(bcrypt.compareSync(password, users[userID].password));
+  const rightPass = bcrypt.compareSync(password, users[userID].password,);
+  if (!rightPass) {
     return res.status(403).end("<p>Wrong password</p>");
   }
 
@@ -138,7 +143,6 @@ app.get("/urls/new", (req, res) => {
 app.post("/urls/:id", (req, res) => {
   const { id } = req.params;
   const user = req.cookies["user_id"];
-  console.log(req.cookies);
   const { newLongUrl } = req.body;
 
   if (!id) {
@@ -209,6 +213,7 @@ app.get("/u/:id", (req, res) => {
 app.post("/register", (req, res) => {
   const { email, password } = req.body;
 
+  
   // error handling for when either password or email is empty
   if (!email || !password) {
     res.status(400).end("<p>Code 400: Email or password empty. Make sure they are both filled.<p>");
@@ -216,8 +221,9 @@ app.post("/register", (req, res) => {
     res.status(400).end("<p>Code 400: Email exists in database already.</p>");
   } else {
     const newId = generateRandomString(6);
-    users[newId] = { id: newId, email, password };
-
+    const hashedPass = bcrypt.hashSync(password, 10);
+    users[newId] = { id: newId, email, password:hashedPass };
+    console.log(users);
     res.cookie("user_id", newId);
   }
   res.redirect("/urls");

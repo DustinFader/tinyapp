@@ -29,6 +29,9 @@
             <th scope="col">Delete</th>
           </tr>
         </thead>
+        <% if (!userId) { %>
+        <h5>Please login to access the database.</h5>
+        <% } %>
         <tbody>
           <% for (let id in urls) { %>
             <tr>
