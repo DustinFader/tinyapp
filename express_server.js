@@ -2,8 +2,9 @@ const express = require("express");
 const morgan = require("morgan");
 const app = express();
 //const cookieParser = require("cookie-parser");
-const cookieSession = require('cookie-session');
+const cookieSession = require("cookie-session");
 const bcrypt = require("bcryptjs");
+const { getUserByEmail, urlsForUser, generateRandomString } = require("./helpers");
 
 const PORT = 8080; // default port
 app.set("view engine", "ejs");
@@ -23,18 +24,7 @@ const urlDatabase = {
   },
 };
 
-const users = {
-  userRandomID: {
-    id: "userRandomID",
-    email: "user@example.com",
-    password: "purple-monkey-dinosaur",
-  },
-  aJ48lW: {
-    id: "aJ48lW",
-    email: "user2@example.com",
-    password: "dishwasher-funk",
-  },
-};
+const users = {};
 
 /////////////////
 
@@ -82,7 +72,7 @@ app.post("/login", (req, res) => {
     return res.status(400).end("<p>Code 400: Email or password empty. Make sure they are both filled.</p>");
   }
   
-  const userID = getUserByEmail(email);
+  const userID = getUserByEmail(email, users);
   if (!userID) {
     return res.status(403).end("<p>No user by that email</p>");
   }
@@ -123,7 +113,7 @@ app.get("/hello", (req, res) => {
 app.get("/urls", (req, res) => {
   const user = req.session.user_id;
   console.log(user); // Don't forget to remove this one once done testing
-  const urls = urlsForUser(user);
+  const urls = urlsForUser(user, urlDatabase);
   const templateVars = { userId: users[user], urls };
   res.render("urls_index", templateVars);
 });
@@ -164,7 +154,7 @@ app.get("/urls/:id", (req, res) => {
 
   if (!user) {
     res.send("Need to be logged in to use this page.");
-  } else if (!urlsForUser(user)[id]) {
+  } else if (!urlsForUser(user, urlDatabase)[id]) {
     res.send("Page not available to user");
   } else {
     const templateVars = { userId: users[user], id, longURL: urlDatabase[id].longURL };
@@ -217,7 +207,7 @@ app.post("/register", (req, res) => {
   // error handling for when either password or email is empty
   if (!email || !password) {
     res.status(400).end("<p>Code 400: Email or password empty. Make sure they are both filled.<p>");
-  } else if (getUserByEmail(email)) {
+  } else if (getUserByEmail(email, users)) {
     res.status(400).end("<p>Code 400: Email exists in database already.</p>");
   } else {
     const newId = generateRandomString(6);
@@ -234,35 +224,3 @@ app.post("/register", (req, res) => {
 app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`);
 });
-
-const getUserByEmail = (email) => {
-  // loops through users database
-  // checking if each users email matches the email being used
-  // if it matches then returns the emails user id else false
-  for (let user in users) {
-    if (users[user].email === email) {
-      return user;
-    }
-  }
-  return false;
-};
-
-const urlsForUser = (id) => {
-  let urls = {};
-  for (let short in urlDatabase) {
-    if (urlDatabase[short].userID === id) {
-      urls[short] = urlDatabase[short];
-    }
-  }
-  return urls;
-};
-
-// based on https://stackoverflow.com/questions/1349404/generate-random-string-characters-in-javascript?rq=1
-const generateRandomString = (maxLength) => {
-  let result = '';
-  const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-  for (let i = 0; i < maxLength; i++) {
-    result += characters[Math.floor(Math.random() * characters.length)];
-  }
-  return result;
-};
