@@ -3,6 +3,7 @@ const morgan = require("morgan");
 const app = express();
 const cookieSession = require("cookie-session");
 const bcrypt = require("bcryptjs");
+const methodOverride = require("method-override");
 const { getUserByEmail, urlsForUser, generateRandomString } = require("./helpers");
 
 const PORT = 8080; // default port
@@ -40,8 +41,8 @@ const users = {
 /////////////////
 
 app.use(morgan("dev"));
-//app.use(cookieParser());
 app.use(express.urlencoded({ extended: true }));
+app.use(methodOverride("_method"));
 app.use(cookieSession({
   name: "session",
   keys: ["Slander", "Hofman", "Liftoff"],
@@ -176,7 +177,7 @@ app.get("/urls/:id", (req, res) => {
 });
 
 // delete url in database
-app.post("/urls/:id/delete", (req, res) => {
+app.delete("/urls/:id", (req, res) => {
   const user = req.session.user_id;
   const { id } = req.params;
 
@@ -195,7 +196,7 @@ app.post("/urls/:id/delete", (req, res) => {
 });
 
 // adds recieved input from /urls/new form into database
-app.post("/urls", (req, res) => {
+app.put("/urls", (req, res) => {
   const userID = req.session.user_id;
 
   if (!userID) {
