@@ -9,6 +9,7 @@ const getUserByEmail = (email, database) => {
   }
 };
 
+// returns object of all urls available to user
 const urlsForUser = (id, urlDatabase) => {
   let urls = {};
   for (let short in urlDatabase) {
