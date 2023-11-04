@@ -1,5 +1,4 @@
 const { assert } = require('chai');
-
 const { getUserByEmail, urlsForUser } = require("../helpers");
 
 const testUsers = {
@@ -52,9 +51,9 @@ describe('urlsForUser', () => {
     assert.deepEqual(user, expectedUserID);
   });
 
-  // it('should return undefined from an email that doesnt exist in database.', () => {
-  //   const user = getUserByEmail("aJ48lt", testUrlDatabase);
-  //   const expectedUserID = {};
-  //   assert.strictEqual(user, expectedUserID);
-  // });
+  it('should return undefined from an email that doesnt exist in database.', () => {
+    const user = getUserByEmail("aJ48lt", testUrlDatabase);
+    const expectedUserID = undefined; // was kind of expecting an empty object but still works
+    assert.strictEqual(user, expectedUserID);
+  });
 });
