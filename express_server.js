@@ -1,7 +1,6 @@
 const express = require("express");
 const morgan = require("morgan");
 const app = express();
-//const cookieParser = require("cookie-parser");
 const cookieSession = require("cookie-session");
 const bcrypt = require("bcryptjs");
 const { getUserByEmail, urlsForUser, generateRandomString } = require("./helpers");
@@ -10,7 +9,7 @@ const PORT = 8080; // default port
 app.set("view engine", "ejs");
 
 //////////////////
-// test databases
+// databases
 //////////////////
 
 const urlDatabase = {
@@ -24,7 +23,19 @@ const urlDatabase = {
   },
 };
 
-const users = {};
+// database of users, i should add an extra input for a nickname using the id. tho its not whats asked
+const users = {
+  userRandomID: {
+    id: "userRandomID",
+    email: "user@example.com",
+    password: "purple-monkey-dinosaur",
+  },
+  aJ48lW: {
+    id: "aJ48lW",
+    email: "user2@example.com",
+    password: "dishwasher-funk",
+  }
+};
 
 /////////////////
 
@@ -32,7 +43,7 @@ app.use(morgan("dev"));
 //app.use(cookieParser());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieSession({
-  name: 'session',
+  name: "session",
   keys: ["Slander", "Hofman", "Liftoff"],
   maxAge: 12 * 60 * 60 * 1000 // 12 hours
 }));
@@ -63,23 +74,21 @@ app.get("/login", (req, res) => {
 });
 
 app.post("/login", (req, res) => {
-  // if email passed is in database then
-  // if password equal the same in the database then logs in and gives cookie
-  // else return 400 code
+  // if email exists in database and password equal the same in the database then logs in and gives cookie.
   const { email, password } = req.body;
-  
+
   if (!email || !password) {
-    return res.status(400).end("<p>Code 400: Email or password empty. Make sure they are both filled.</p>");
+    return res.status(400).send("<p>Code 400: Email or password empty. Make sure they are both filled.</p>");
   }
-  
+
   const userID = getUserByEmail(email, users);
   if (!userID) {
-    return res.status(403).end("<p>No user by that email</p>");
+    return res.status(403).send("<p>No user by that email</p>");
   }
-  
+
   const rightPass = bcrypt.compareSync(password, users[userID].password,);
   if (!rightPass) {
-    return res.status(403).end("<p>Wrong password</p>");
+    return res.status(403).send("<p>Wrong password</p>");
   }
 
   req.session.user_id = userID;
@@ -112,7 +121,6 @@ app.get("/hello", (req, res) => {
 
 app.get("/urls", (req, res) => {
   const user = req.session.user_id;
-  console.log(user); // Don't forget to remove this one once done testing
   const urls = urlsForUser(user, urlDatabase);
   const templateVars = { userId: users[user], urls };
   res.render("urls_index", templateVars);
@@ -137,11 +145,15 @@ app.post("/urls/:id", (req, res) => {
   const { newLongUrl } = req.body;
 
   if (!id) {
-    return res.send("End point does not exist, try another.");
-  } else if (!user) {
-    return res.send("Need to be logged in.");
-  } else if (urlDatabase[id].userID !== user) {
-    return res.send("Url does not belong to you.");
+    return res.status(400).send("End point does not exist, try another.");
+  }
+
+  if (!user) {
+    return res.status(403).send("Need to be logged in.");
+  }
+
+  if (urlDatabase[id].userID !== user) {
+    return res.status(403).send("Url does not belong to you.");
   }
 
   urlDatabase[id].longURL = newLongUrl;
@@ -153,30 +165,33 @@ app.get("/urls/:id", (req, res) => {
   const { id } = req.params;
 
   if (!user) {
-    res.send("Need to be logged in to use this page.");
-  } else if (!urlsForUser(user, urlDatabase)[id]) {
-    res.send("Page not available to user");
-  } else {
-    const templateVars = { userId: users[user], id, longURL: urlDatabase[id].longURL };
-    res.render("urls_show", templateVars);
+    return res.status(403).send("Need to be logged in to use this page.");
   }
+  if (!urlsForUser(user, urlDatabase)[id]) {
+    return res.status(403).send("Page not available to user");
+  }
+
+  const templateVars = { userId: users[user], id, longURL: urlDatabase[id].longURL };
+  res.render("urls_show", templateVars);
 });
 
 // delete url in database
 app.post("/urls/:id/delete", (req, res) => {
   const user = req.session.user_id;
   const { id } = req.params;
-  
+
   if (!urlDatabase[id]) {
-    return res.send("Id does not exist try another.");
-  } else if (!user) {
-    return res.send("Need to be logged in.");
-  } else if (urlDatabase[id].userID !== user) {
-    return res.send("Url does not belong to you.");
-  } else {
-    delete urlDatabase[id];
-    res.redirect("/urls");
+    return res.status(400).send("Id does not exist try another.");
   }
+  if (!user) {
+    return res.status(403).send("Need to be logged in.");
+  }
+  if (urlDatabase[id].userID !== user) {
+    return res.status(403).send("Url does not belong to you.");
+  }
+
+  delete urlDatabase[id];
+  res.redirect("/urls");
 });
 
 // adds recieved input from /urls/new form into database
@@ -187,7 +202,7 @@ app.post("/urls", (req, res) => {
     res.send("Cannot shorten urls until logged in");
   } else {
     const shortUrl = generateRandomString(6);
-    urlDatabase[shortUrl] = { longURL: req.body.longURL, userID};
+    urlDatabase[shortUrl] = { longURL: req.body.longURL, userID };
     res.redirect(`/urls/${shortUrl}`);
   }
 });
@@ -206,16 +221,16 @@ app.post("/register", (req, res) => {
 
   // error handling for when either password or email is empty
   if (!email || !password) {
-    res.status(400).end("<p>Code 400: Email or password empty. Make sure they are both filled.<p>");
+    res.status(400).send("<p>Code 400: Email or password empty. Make sure they are both filled.<p>");
   } else if (getUserByEmail(email, users)) {
-    res.status(400).end("<p>Code 400: Email exists in database already.</p>");
+    res.status(400).send("<p>Code 400: Email exists in database already.</p>");
   } else {
     const newId = generateRandomString(6);
     const salt = bcrypt.genSaltSync(10);
     const hashedPass = bcrypt.hashSync(password, salt);
 
     // assign new user to user database
-    users[newId] = { id: newId, email, password:hashedPass };
+    users[newId] = { id: newId, email, password: hashedPass };
     req.session.user_id = newId;
   }
   res.redirect("/urls");
