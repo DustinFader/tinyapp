@@ -38,10 +38,10 @@ app.get("/login", (req, res) => {
 
   if (user) {
     res.redirect("/urls");
-  } else {
-    const templateVars = { userId: users[user] };
-    res.render("login", templateVars);
   }
+
+  const templateVars = { userId: users[user] };
+  res.render("login", templateVars);
 });
 
 app.post("/login", (req, res) => {
@@ -77,10 +77,10 @@ app.get("/register", (req, res) => {
 
   if (user) {
     res.redirect("/urls");
-  } else {
-    const templateVars = { userId: users[user] };
-    res.render("register", templateVars);
   }
+
+  const templateVars = { userId: users[user] };
+  res.render("register", templateVars);
 });
 
 ////////////////////////
@@ -102,11 +102,11 @@ app.get("/urls/new", (req, res) => {
   const user = req.session.user;
 
   if (!user) {
-    res.redirect("/login");
-  } else {
-    const templateVars = { userId: users[user], urls: urlDatabase };
-    res.render("urls_new", templateVars);
+    return res.redirect("/login");
   }
+
+  const templateVars = { userId: users[user], urls: urlDatabase };
+  res.render("urls_new", templateVars);
 });
 
 // add new url to database
@@ -142,6 +142,7 @@ app.get("/urls/:id", (req, res) => {
   if (!user) {
     return res.status(418).send("Need to be logged in to use this page.");
   }
+
   if (!urlsForUser(user, urlDatabase)[id]) {
     return res.status(418).send("Page not available to user");
   }
@@ -175,12 +176,12 @@ app.put("/urls", (req, res) => {
   const userID = req.session.user;
 
   if (!userID) {
-    res.send("Cannot shorten urls until logged in");
-  } else {
-    const shortUrl = generateRandomString(6);
-    urlDatabase[shortUrl] = { longURL: req.body.longURL, userID, visited: [], uniqueVisited: []};
-    res.redirect(`/urls/${shortUrl}`);
+    return res.send("Cannot shorten urls until logged in");
   }
+
+  const shortUrl = generateRandomString(6);
+  urlDatabase[shortUrl] = { longURL: req.body.longURL, userID, visited: [], uniqueVisited: [] };
+  res.redirect(`/urls/${shortUrl}`);
 });
 
 // redirects the user to the short links site when they click the short url
@@ -188,14 +189,16 @@ app.get("/u/:id", (req, res) => {
   const db = urlDatabase[req.params.id];
   const longURL = db.longURL;
   const user = req.session.user;
-  
+
   if (longURL) {
-    db.visited.push({ timestamp: new Date, user});
+    db.visited.push({ timestamp: new Date, user });
     if (!db.uniqueVisited.find((cookie) => cookie === user)) {
       db.uniqueVisited.push(user);
     }
     res.redirect(longURL);
-  } else res.send("Url does not exist.");
+  }
+
+  res.send("Url does not exist.");
 });
 
 // adds new user to users database
@@ -204,18 +207,21 @@ app.post("/register", (req, res) => {
 
   // error handling for when either password or email is empty
   if (!email || !password) {
-    res.status(400).send("<p>Code 400: Email or password empty. Make sure they are both filled.<p>");
-  } else if (getUserByEmail(email, users)) {
-    res.status(400).send("<p>Code 400: Email exists in database already.</p>");
-  } else {
-    const newId = generateRandomString(6);
-    const salt = bcrypt.genSaltSync(10);
-    const hashedPass = bcrypt.hashSync(password, salt);
-
-    // assign new user to user database
-    users[newId] = { id: newId, email, password: hashedPass };
-    req.session.user = newId;
+    return res.status(400).send("<p>Code 400: Email or password empty. Make sure they are both filled.<p>");
   }
+
+  if (getUserByEmail(email, users)) {
+    return res.status(400).send("<p>Code 400: Email exists in database already.</p>");
+  }
+
+  const newId = generateRandomString(6);
+  const salt = bcrypt.genSaltSync(10);
+  const hashedPass = bcrypt.hashSync(password, salt);
+
+  // assign new user to user database
+  users[newId] = { id: newId, email, password: hashedPass };
+  req.session.user = newId;
+
   res.redirect("/urls");
 });
 
