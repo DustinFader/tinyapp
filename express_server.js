@@ -37,7 +37,7 @@ app.get("/login", (req, res) => {
   const user = req.session.user;
 
   if (user) {
-    res.redirect("/urls");
+    return res.redirect("/urls");
   }
 
   const templateVars = { userId: users[user] };
@@ -76,7 +76,7 @@ app.get("/register", (req, res) => {
   const user = req.session.user;
 
   if (user) {
-    res.redirect("/urls");
+    return res.redirect("/urls");
   }
 
   const templateVars = { userId: users[user] };
@@ -195,7 +195,7 @@ app.get("/u/:id", (req, res) => {
     if (!db.uniqueVisited.find((cookie) => cookie === user)) {
       db.uniqueVisited.push(user);
     }
-    res.redirect(longURL);
+    return res.redirect(longURL);
   }
 
   res.send("Url does not exist.");
