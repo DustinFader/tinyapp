@@ -1,11 +1,12 @@
 const express = require("express");
-const morgan = require("morgan");
-const app = express();
-const cookieSession = require("cookie-session");
 const bcrypt = require("bcryptjs");
+const cookieSession = require("cookie-session");
+const morgan = require("morgan");
 const methodOverride = require("method-override");
 const { getUserByEmail, urlsForUser, generateRandomString } = require("./helpers");
 const { users, urlDatabase } = require("./db/databases");
+
+const app = express();
 
 const PORT = 8080; // default port
 app.set("view engine", "ejs");
