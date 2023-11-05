@@ -68,7 +68,7 @@ app.get("/urls.json", (req, res) => {
 ////////////////////////
 
 app.get("/login", (req, res) => {
-  const user = req.session.user_id;
+  const user = req.session.user;
 
   if (user) {
     res.redirect("/urls");
@@ -96,7 +96,7 @@ app.post("/login", (req, res) => {
     return res.status(418).send("<p>Wrong password</p>");
   }
 
-  req.session.user_id = userID;
+  req.session.user = userID;
   res.redirect("/urls");
 });
 
@@ -107,7 +107,7 @@ app.post("/logout", (req, res) => {
 
 // registration page
 app.get("/register", (req, res) => {
-  const user = req.session.user_id;
+  const user = req.session.user;
 
   if (user) {
     res.redirect("/urls");
@@ -125,7 +125,7 @@ app.get("/hello", (req, res) => {
 });
 
 app.get("/urls", (req, res) => {
-  const user = req.session.user_id;
+  const user = req.session.user;
   const urls = urlsForUser(user, urlDatabase);
   const templateVars = { userId: users[user], urls };
   res.render("urls_index", templateVars);
@@ -133,7 +133,7 @@ app.get("/urls", (req, res) => {
 
 // page with a form a user could fill and add to the database
 app.get("/urls/new", (req, res) => {
-  const user = req.session.user_id;
+  const user = req.session.user;
 
   if (!user) {
     res.redirect("/login");
@@ -146,7 +146,7 @@ app.get("/urls/new", (req, res) => {
 // add new url to database
 app.post("/urls/:id", (req, res) => {
   const { id } = req.params;
-  const user = req.session.user_id;
+  const user = req.session.user;
   const { newLongUrl } = req.body;
 
   if (!id) {
@@ -170,7 +170,7 @@ app.post("/urls/:id", (req, res) => {
 
 // short url creation/edit page
 app.get("/urls/:id", (req, res) => {
-  const user = req.session.user_id;
+  const user = req.session.user;
   const { id } = req.params;
 
   if (!user) {
@@ -187,7 +187,7 @@ app.get("/urls/:id", (req, res) => {
 
 // delete url in database
 app.delete("/urls/:id", (req, res) => {
-  const user = req.session.user_id;
+  const user = req.session.user;
   const { id } = req.params;
 
   if (!urlDatabase[id]) {
@@ -206,7 +206,7 @@ app.delete("/urls/:id", (req, res) => {
 
 // adds recieved input from /urls/new form into database
 app.put("/urls", (req, res) => {
-  const userID = req.session.user_id;
+  const userID = req.session.user;
 
   if (!userID) {
     res.send("Cannot shorten urls until logged in");
@@ -221,7 +221,7 @@ app.put("/urls", (req, res) => {
 app.get("/u/:id", (req, res) => {
   const db = urlDatabase[req.params.id];
   const longURL = db.longURL;
-  const user = req.session.user_id;
+  const user = req.session.user;
   
   if (longURL) {
     db.visited.push({ timestamp: new Date, user});
@@ -248,7 +248,7 @@ app.post("/register", (req, res) => {
 
     // assign new user to user database
     users[newId] = { id: newId, email, password: hashedPass };
-    req.session.user_id = newId;
+    req.session.user = newId;
   }
   res.redirect("/urls");
 });
