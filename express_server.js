@@ -17,10 +17,14 @@ const urlDatabase = {
   b6UTxQ: {
     longURL: "https://www.tsn.ca",
     userID: "aJ48lW",
+    visited: [],
+    uniqueVisited: []
   },
   i3BoGr: {
     longURL: "https://www.google.ca",
     userID: "aJ48lW",
+    visited: [],
+    uniqueVisited: []
   },
 };
 
@@ -159,9 +163,12 @@ app.post("/urls/:id", (req, res) => {
 
   urlDatabase[id].longURL = newLongUrl;
   urlDatabase[id].created = new Date();
+  urlDatabase[id].visited = [];
+  urlDatabase[id].uniqueVisited = [];
   res.redirect("/urls");
 });
 
+// short url creation/edit page
 app.get("/urls/:id", (req, res) => {
   const user = req.session.user_id;
   const { id } = req.params;
@@ -173,7 +180,8 @@ app.get("/urls/:id", (req, res) => {
     return res.status(418).send("Page not available to user");
   }
 
-  const templateVars = { userId: users[user], id, longURL: urlDatabase[id].longURL };
+  const { longURL, visited, uniqueVisited } = urlDatabase[id];
+  const templateVars = { userId: users[user], id, longURL, visited, uniqueVisited };
   res.render("urls_show", templateVars);
 });
 
@@ -204,15 +212,22 @@ app.put("/urls", (req, res) => {
     res.send("Cannot shorten urls until logged in");
   } else {
     const shortUrl = generateRandomString(6);
-    urlDatabase[shortUrl] = { longURL: req.body.longURL, userID };
+    urlDatabase[shortUrl] = { longURL: req.body.longURL, userID, visited: [], uniqueVisited: []};
     res.redirect(`/urls/${shortUrl}`);
   }
 });
 
+// redirects the user to the short links site when they click the short url
 app.get("/u/:id", (req, res) => {
-  const longURL = urlDatabase[req.params.id].longURL;
-
+  const db = urlDatabase[req.params.id];
+  const longURL = db.longURL;
+  const user = req.session.user_id;
+  
   if (longURL) {
+    db.visited.push({ timestamp: new Date, user});
+    if (!db.uniqueVisited.find((cookie) => cookie === user)) {
+      db.uniqueVisited.push(user);
+    }
     res.redirect(longURL);
   } else res.send("Url does not exist.");
 });

@@ -20,12 +20,17 @@
         <p class="card-text">
           Short URL ID: <a href="/u/<%= id %>"><%= id %></a>
         </p>
+        <p>Total Times Visited: <%= visited.length %></p>
+        <p>Unique Times Visited: <%= uniqueVisited.length %></p>
         <td>
           <form method="POST" action="/urls/<%= id %>">
               <input type="text" name="newLongUrl" value="<%= longURL %>">
               <button type="submit">update</button>
             </form>
         </td>
+        <% for (let visit of visited) { %>
+          <p>User: (<%= visit.user %>) Visited on: <%= visit.timestamp %></p>
+        <% } %>
       </div>
       <div class="card-footer text-muted"></div>
     </div>
