@@ -158,6 +158,7 @@ app.post("/urls/:id", (req, res) => {
   }
 
   urlDatabase[id].longURL = newLongUrl;
+  urlDatabase[id].created = new Date();
   res.redirect("/urls");
 });
 
