@@ -5,44 +5,10 @@ const cookieSession = require("cookie-session");
 const bcrypt = require("bcryptjs");
 const methodOverride = require("method-override");
 const { getUserByEmail, urlsForUser, generateRandomString } = require("./helpers");
+const { users, urlDatabase } = require("./db/databases");
 
 const PORT = 8080; // default port
 app.set("view engine", "ejs");
-
-//////////////////
-// databases
-//////////////////
-
-const urlDatabase = {
-  b6UTxQ: {
-    longURL: "https://www.tsn.ca",
-    userID: "aJ48lW",
-    visited: [],
-    uniqueVisited: []
-  },
-  i3BoGr: {
-    longURL: "https://www.google.ca",
-    userID: "aJ48lW",
-    visited: [],
-    uniqueVisited: []
-  },
-};
-
-// database of users, i should add an extra input for a nickname using the id. tho its not whats asked
-const users = {
-  userRandomID: {
-    id: "userRandomID",
-    email: "user@example.com",
-    password: "purple-monkey-dinosaur",
-  },
-  aJ48lW: {
-    id: "aJ48lW",
-    email: "user2@example.com",
-    password: "dishwasher-funk",
-  }
-};
-
-/////////////////
 
 app.use(morgan("dev"));
 app.use(express.urlencoded({ extended: true }));
@@ -144,7 +110,7 @@ app.get("/urls/new", (req, res) => {
 });
 
 // add new url to database
-app.post("/urls/:id", (req, res) => {
+app.put("/urls/:id", (req, res) => {
   const { id } = req.params;
   const user = req.session.user;
   const { newLongUrl } = req.body;

@@ -23,7 +23,7 @@
         <p>Total Times Visited: <%= visited.length %></p>
         <p>Unique Times Visited: <%= uniqueVisited.length %></p>
         <td>
-          <form method="POST" action="/urls/<%= id %>">
+          <form method="POST" action="/urls/<%= id %>?_method=PUT">
               <input type="text" name="newLongUrl" value="<%= longURL %>">
               <button type="submit">update</button>
             </form>

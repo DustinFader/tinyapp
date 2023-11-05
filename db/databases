@@ -1,0 +1,36 @@
+//////////////////
+// databases
+//////////////////
+
+const urlDatabase = {
+  b6UTxQ: {
+    longURL: "https://www.tsn.ca",
+    userID: "aJ48lW",
+    visited: [],
+    uniqueVisited: []
+  },
+  i3BoGr: {
+    longURL: "https://www.google.ca",
+    userID: "aJ48lW",
+    visited: [],
+    uniqueVisited: []
+  },
+};
+
+// database of users, i should add an extra input for a nickname using the id. tho its not whats asked
+const users = {
+  userRandomID: {
+    id: "userRandomID",
+    email: "user@example.com",
+    password: "purple-monkey-dinosaur",
+  },
+  aJ48lW: {
+    id: "aJ48lW",
+    email: "user2@example.com",
+    password: "dishwasher-funk",
+  }
+};
+
+/////////////////
+
+module.exports = { users, urlDatabase };
