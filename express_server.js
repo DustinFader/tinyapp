@@ -22,7 +22,7 @@ app.use(cookieSession({
 
 // main urls
 app.get("/", (req, res) => {
-  res.redirect("/urls");
+  res.redirect("/login");
 });
 
 // prints database to page in json format
@@ -50,7 +50,7 @@ app.post("/login", (req, res) => {
   const { email, password } = req.body;
 
   if (!email || !password) {
-    return res.status(400).send("<p>Code 400: Email or password empty. Make sure they are both filled.</p>");
+    return res.status(403).send("<p>Code 400: Email or password empty. Make sure they are both filled.</p>");
   }
 
   const userID = getUserByEmail(email, users);
