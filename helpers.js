@@ -1,7 +1,4 @@
 const getUserByEmail = (email, database) => {
-  // loops through users database
-  // checking if each users email matches the email being used
-  // if it matches then returns the emails user id else false
   for (let user in database) {
     if (database[user].email === email) {
       return user;
@@ -9,7 +6,6 @@ const getUserByEmail = (email, database) => {
   }
 };
 
-// returns object of all urls available to user
 const urlsForUser = (id, urlDatabase) => {
   let urls = {};
   for (let short in urlDatabase) {
