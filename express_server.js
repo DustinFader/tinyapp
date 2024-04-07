@@ -3,10 +3,15 @@ const bcrypt = require("bcryptjs");
 const cookieSession = require("cookie-session");
 const morgan = require("morgan");
 const methodOverride = require("method-override");
-const { getUserByEmail, urlsForUser, generateRandomString } = require("./helpers");
 const { users, urlDatabase } = require("./db/databases");
 
 const app = express();
+
+const { 
+  getUserByEmail, 
+  urlsForUser, 
+  generateRandomString 
+} = require("./helpers");
 
 const PORT = 8080; // default port
 app.set("view engine", "ejs");
@@ -56,12 +61,12 @@ app.post("/login", (req, res) => {
 
   const userID = getUserByEmail(email, users);
   if (!userID) {
-    return res.status(418).send("<p>No user by that email</p>");
+    return res.status(403).send("<p>No user by that email</p>");
   }
 
   const rightPass = bcrypt.compareSync(password, users[userID].password,);
   if (!rightPass) {
-    return res.status(418).send("<p>Wrong password</p>");
+    return res.status(403).send("<p>Wrong password</p>");
   }
 
   req.session.user = userID;
@@ -122,11 +127,11 @@ app.put("/urls/:id", (req, res) => {
   }
 
   if (!user) {
-    return res.status(418).send("Need to be logged in.");
+    return res.status(403).send("Need to be logged in.");
   }
 
   if (urlDatabase[id].userID !== user) {
-    return res.status(418).send("Url does not belong to you.");
+    return res.status(403).send("Url does not belong to you.");
   }
 
   urlDatabase[id].longURL = newLongUrl;
@@ -142,11 +147,11 @@ app.get("/urls/:id", (req, res) => {
   const { id } = req.params;
 
   if (!user) {
-    return res.status(418).send("Need to be logged in to use this page.");
+    return res.status(403).send("Need to be logged in to use this page.");
   }
 
   if (!urlsForUser(user, urlDatabase)[id]) {
-    return res.status(418).send("Page not available to user");
+    return res.status(403).send("Page not available to user");
   }
 
   const { longURL, visited, uniqueVisited } = urlDatabase[id];
@@ -163,10 +168,10 @@ app.delete("/urls/:id", (req, res) => {
     return res.status(400).send("Id does not exist try another.");
   }
   if (!user) {
-    return res.status(418).send("Need to be logged in.");
+    return res.status(403).send("Need to be logged in.");
   }
   if (urlDatabase[id].userID !== user) {
-    return res.status(418).send("Url does not belong to you.");
+    return res.status(403).send("Url does not belong to you.");
   }
 
   delete urlDatabase[id];
