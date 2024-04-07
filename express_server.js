@@ -90,6 +90,34 @@ app.get("/register", (req, res) => {
   res.render("register", templateVars);
 });
 
+// adds new user to users database
+app.post("/register", (req, res) => {
+  const { email, password } = req.body;
+
+  // error handling for when either password or email is empty
+  if (!email || !password) {
+    return res.status(400).send("<p>Code 400: Email or password empty. Make sure they are both filled.<p>");
+  }
+
+  if (getUserByEmail(email, users)) {
+    return res.status(400).send("<p>Code 400: Email exists in database already.</p>");
+  }
+
+  const newId = generateRandomString(6);
+  const salt = bcrypt.genSaltSync(10);
+  const hashedPass = bcrypt.hashSync(password, salt);
+
+  // assign new user to user database
+  users[newId] = { id: newId, email, password: hashedPass };
+  req.session.user = newId;
+
+  res.redirect("/urls");
+});
+
+app.listen(PORT, () => {
+  console.log(`Example app listening on port ${PORT}!`);
+});
+
 ////////////////////////
 
 // hello world page
@@ -206,32 +234,4 @@ app.get("/u/:id", (req, res) => {
   }
 
   res.send("Url does not exist.");
-});
-
-// adds new user to users database
-app.post("/register", (req, res) => {
-  const { email, password } = req.body;
-
-  // error handling for when either password or email is empty
-  if (!email || !password) {
-    return res.status(400).send("<p>Code 400: Email or password empty. Make sure they are both filled.<p>");
-  }
-
-  if (getUserByEmail(email, users)) {
-    return res.status(400).send("<p>Code 400: Email exists in database already.</p>");
-  }
-
-  const newId = generateRandomString(6);
-  const salt = bcrypt.genSaltSync(10);
-  const hashedPass = bcrypt.hashSync(password, salt);
-
-  // assign new user to user database
-  users[newId] = { id: newId, email, password: hashedPass };
-  req.session.user = newId;
-
-  res.redirect("/urls");
-});
-
-app.listen(PORT, () => {
-  console.log(`Example app listening on port ${PORT}!`);
 });
