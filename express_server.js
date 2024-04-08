@@ -217,7 +217,7 @@ app.put("/urls", (req, res) => {
   }
 
   const shortUrl = generateRandomString(6);
-  urlDatabase[shortUrl] = { longURL: req.body.longURL, userID, visited: [], uniqueVisited: [] };
+  urlDatabase[shortUrl] = { longURL: req.body.longURL, userID, created: new Date(), visited: [], uniqueVisited: [] };
   res.redirect(`/urls/${shortUrl}`);
 });
 
