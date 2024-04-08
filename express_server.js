@@ -106,7 +106,6 @@ app.post("/register", (req, res) => {
   const newId = generateRandomString(6);
   const salt = bcrypt.genSaltSync(10);
   const hashedPass = bcrypt.hashSync(password, salt);
-
   // assign new user to user database
   users[newId] = { id: newId, email, password: hashedPass };
   req.session.user = newId;
@@ -127,6 +126,9 @@ app.get("/hello", (req, res) => {
 
 app.get("/urls", (req, res) => {
   const user = req.session.user;
+  if (!user) {
+    return res.status(403).send("You need to be logged in to view this page.");
+  }
   const urls = urlsForUser(user, urlDatabase);
   const templateVars = { userId: users[user], urls };
   res.render("urls_index", templateVars);
@@ -144,7 +146,7 @@ app.get("/urls/new", (req, res) => {
   res.render("urls_new", templateVars);
 });
 
-// add new url to database
+// updates url in database
 app.put("/urls/:id", (req, res) => {
   const { id } = req.params;
   const user = req.session.user;
@@ -178,8 +180,8 @@ app.get("/urls/:id", (req, res) => {
     return res.status(403).send("Need to be logged in to use this page.");
   }
 
-  if (!urlsForUser(user, urlDatabase)[id]) {
-    return res.status(403).send("Page not available to user");
+  if (!urlDatabase[id] || !urlsForUser(user, urlDatabase)[id]) {
+    return res.status(404).send("URL not found.");
   }
 
   const { longURL, visited, uniqueVisited } = urlDatabase[id];
@@ -222,16 +224,16 @@ app.put("/urls", (req, res) => {
 // redirects the user to the short links site when they click the short url
 app.get("/u/:id", (req, res) => {
   const db = urlDatabase[req.params.id];
+  if (!db || !db.longURL) {
+    return res.status(404).send("URL not found.");
+  }
   const longURL = db.longURL;
   const user = req.session.user;
-
-  if (longURL) {
-    db.visited.push({ timestamp: new Date, user });
-    if (!db.uniqueVisited.find((cookie) => cookie === user)) {
-      db.uniqueVisited.push(user);
-    }
-    return res.redirect(longURL);
+  db.visited.push({ timestamp: new Date, user });
+  if (!db.uniqueVisited.find((cookie) => cookie === user)) {
+    db.uniqueVisited.push(user);
   }
-
-  res.send("Url does not exist.");
+  res.redirect(longURL);
 });
+
+module.exports = app;
