@@ -10,8 +10,8 @@ const urlDatabase = {
     uniqueVisited: []
   },
   i3BoGr: {
-    longURL: "https://www.google.ca",
-    userID: "aJ48lW",
+    longURL: "http://www.lighthouselabs.ca",
+    userID: "userRandomID",
     visited: [],
     uniqueVisited: []
   },
@@ -22,12 +22,12 @@ const users = {
   userRandomID: {
     id: "userRandomID",
     email: "user@example.com",
-    password: "purple-monkey-dinosaur",
+    password: "$2a$10$TETDXHDamCludXWWG/ikluNY/NYd.FnlFJ4nm0ECP/lgtBEnr2efi", // purple-monkey-dinosaur
   },
   aJ48lW: {
     id: "aJ48lW",
     email: "user2@example.com",
-    password: "dishwasher-funk",
+    password: "$2a$10$R2kKTMkPNTfAqmT11CYbNeD22LJJT7dPPtj4z1MayXAyY40plzy6q", // dishwasher-funk
   }
 };
 
